@@ -1,5 +1,13 @@
 # dehelpers
 
+<p align="left">
+  <a href="https://pypi.org/project/dehelpers/"><img src="https://img.shields.io/pypi/v/dehelpers.svg?color=blue" alt="PyPI version"></a>
+  <a href="https://pypi.org/project/dehelpers/"><img src="https://img.shields.io/pypi/pyversions/dehelpers.svg" alt="Python versions"></a>
+  <a href="https://github.com/shard-c6/dehelpers/actions/workflows/ci.yml"><img src="https://github.com/shard-c6/dehelpers/actions/workflows/ci.yml/badge.svg" alt="CI Status"></a>
+  <a href="https://github.com/shard-c6/dehelpers/blob/main/LICENSE"><img src="https://img.shields.io/github/license/shard-c6/dehelpers.svg" alt="License"></a>
+  <a href="https://pepy.tech/project/dehelpers"><img src="https://pepy.tech/badge/dehelpers" alt="Downloads"></a>
+</p>
+
 Lightweight, production-hardened Python utilities for data engineering pipelines.
 
 **Resilient HTTP** · **PostgreSQL helpers** · **Structured JSON logging** — with automatic secret redaction, bounded retries, and safe connection pooling.
