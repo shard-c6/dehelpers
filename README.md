@@ -163,6 +163,83 @@ with LogContext(request_id="req-abc"):
     #          "row_count": 500, "error": null}
 ```
 
+### Complete End-to-End Ingestion Pipeline
+
+Here is a full, production-grade ETL script demonstrating how to combine `ResilientClient`, `DatabaseManager`, and `get_logger` to safely fetch, log, and ingest records in a transactional loop:
+
+```python
+import sys
+from dehelpers import get_logger, LogContext, ResilientClient, DatabaseManager
+
+# 1. Initialize your structured JSON logger
+logger = get_logger("user_ingestion_pipeline", job_id="daily-sync-job")
+
+def run_pipeline():
+    logger.info("Initializing ETL pipeline")
+    
+    # 2. Initialize the Database connection manager
+    try:
+        db = DatabaseManager()  # Resolves DSN automatically via DATABASE_URL
+    except Exception as exc:
+        logger.error("Database initialization failed", exc_info=exc)
+        sys.exit(1)
+        
+    # 3. Verify / create target schema
+    try:
+        with db.session() as session:
+            session.execute(
+                "CREATE TABLE IF NOT EXISTS pipeline_users ("
+                "  id INT PRIMARY KEY,"
+                "  name VARCHAR(100),"
+                "  email VARCHAR(100)"
+                ")"
+            )
+        logger.info("Database schema verified")
+    except Exception as exc:
+        logger.error("Failed to verify database schema", exc_info=exc)
+        sys.exit(1)
+
+    # 4. Fetch and Ingest records resiliently
+    client = ResilientClient()
+    api_url = "https://api.example.com/v1/users"
+
+    try:
+        # Stream individual items across paginated pages
+        for user in client.paginate(api_url):
+            user_id = user.get("id")
+            
+            # LogContext attaches the user_id to all logs emitted in this block
+            with LogContext(request_id=f"user-{user_id}"):
+                with db.session() as session:
+                    # Parameterized query protects against SQL injection
+                    session.execute(
+                        "INSERT INTO pipeline_users (id, name, email) "
+                        "VALUES (:id, :name, :email) "
+                        "ON CONFLICT (id) DO UPDATE "
+                        "SET name = EXCLUDED.name, email = EXCLUDED.email",
+                        {
+                            "id": user_id,
+                            "name": user.get("name"),
+                            "email": user.get("email"),
+                        }
+                    )
+                # This log inherits 'job_id' and 'request_id' (user-ID) in its JSON payload
+                logger.info("Successfully ingested user record", extra={"user_name": user.get("name")})
+                
+    except Exception as exc:
+        logger.error("ETL Ingestion failed mid-pipeline", exc_info=exc)
+        sys.exit(1)
+        
+    finally:
+        client.close()
+        db.dispose()
+        
+    logger.info("ETL Ingestion pipeline completed successfully")
+
+if __name__ == "__main__":
+    run_pipeline()
+```
+
 ---
 
 ## Configuration
@@ -250,6 +327,17 @@ pytest --cov=dehelpers --cov-report=term-missing -m "not postgres"
 
 ---
 
+## Developer Resources & Standards
+
+To ensure the library remains production-grade, reliable, and easily maintainable, we enforce the following open-source standards:
+
+*   **[CONTRIBUTING.md](CONTRIBUTING.md):** Guidelines for cloning the fork, setting up local editable environments, running unit tests, and opening PRs.
+*   **[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md):** Our pledge to foster an inclusive, welcoming, and harassment-free community.
+*   **[CHANGELOG.md](CHANGELOG.md):** Structured history of features, bugfixes, and breaking changes.
+*   **[LICENSE](LICENSE):** Permissive MIT License.
+
+---
+
 ## License
 
-MIT — see [LICENSE](LICENSE).
+Distributed under the MIT License. See [LICENSE](LICENSE) for more information.
