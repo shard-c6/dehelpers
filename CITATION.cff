@@ -8,8 +8,8 @@ authors:
 repository-code: "https://github.com/shard-c6/dehelpers"
 url: "https://pypi.org/project/dehelpers/"
 license: MIT
-version: "0.1.4"
-date-released: "2026-07-05"
+version: "0.2.0"
+date-released: "2026-07-03"
 keywords:
   - python
   - data-engineering
