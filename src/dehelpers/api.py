@@ -42,6 +42,7 @@ _IDEMPOTENT_METHODS = frozenset({"GET", "HEAD", "OPTIONS"})
 @dataclass(frozen=True)
 class RetryPolicy:
     """Configuration for retry behaviour mapped to tenacity."""
+
     max_attempts: int = 4
     backoff_base: float = 1.0
     backoff_max: float = 30.0
@@ -60,8 +61,10 @@ class RetryPolicy:
             "stop": stop_after_attempt(self.max_attempts) | stop_after_delay(self.total_timeout),
             "wait": wait_exponential_jitter(initial=self.backoff_base, max=self.backoff_max),
             "retry": retry_if_exception(
-                lambda exc: isinstance(exc, httpx.RequestError)
-                or (isinstance(exc, httpx.HTTPStatusError) and exc.response.status_code in self.retryable_statuses)
+                lambda exc: (
+                    isinstance(exc, httpx.RequestError)
+                    or (isinstance(exc, httpx.HTTPStatusError) and exc.response.status_code in self.retryable_statuses)
+                )
             ),
             "reraise": True,
         }
@@ -83,11 +86,19 @@ def _log_before_sleep(logger: logging.Logger, safe_url: str, method: str) -> Any
     def callback(retry_state: RetryCallState) -> None:
         if retry_state.outcome and retry_state.outcome.failed:
             exc = retry_state.outcome.exception()
-            status = getattr(exc.response, "status_code", "N/A") if isinstance(exc, httpx.HTTPStatusError) else type(exc).__name__
+            status = (
+                getattr(exc.response, "status_code", "N/A")
+                if isinstance(exc, httpx.HTTPStatusError)
+                else type(exc).__name__
+            )
             logger.warning(
                 "Retryable error %s for %s %s (attempt %d). Sleeping...",
-                status, method, safe_url, retry_state.attempt_number
+                status,
+                method,
+                safe_url,
+                retry_state.attempt_number,
             )
+
     return callback
 
 
@@ -100,10 +111,7 @@ class ResilientClient:
         self._policy = retry_policy or RetryPolicy()
         self._log = logger or logging.getLogger(__name__)
         self._client = httpx.Client(
-            timeout=httpx.Timeout(
-                self._policy.read_timeout,
-                connect=self._policy.connect_timeout
-            )
+            timeout=httpx.Timeout(self._policy.read_timeout, connect=self._policy.connect_timeout)
         )
 
     def get(self, url: str, **kwargs: Any) -> httpx.Response:
@@ -127,14 +135,18 @@ class ResilientClient:
         try:
             for attempt in Retrying(**tenacity_kwargs):
                 with attempt:
-                    self._log.info("HTTP %s %s (attempt %d)", method_upper, safe_url, attempt.retry_state.attempt_number)
+                    self._log.info(
+                        "HTTP %s %s (attempt %d)", method_upper, safe_url, attempt.retry_state.attempt_number
+                    )
                     resp = self._client.request(method_upper, url, **kwargs)
                     resp.raise_for_status()
                     return resp
         except (httpx.HTTPStatusError, httpx.RequestError) as exc:
             last_status = exc.response.status_code if isinstance(exc, httpx.HTTPStatusError) else None
             # Only wrap if it was retryable or failed on connect
-            if isinstance(exc, httpx.RequestError) or (isinstance(exc, httpx.HTTPStatusError) and exc.response.status_code in self._policy.retryable_statuses):
+            if isinstance(exc, httpx.RequestError) or (
+                isinstance(exc, httpx.HTTPStatusError) and exc.response.status_code in self._policy.retryable_statuses
+            ):
                 raise RetryError(
                     f"Request failed for {method_upper} {safe_url}: {exc}",
                     last_status=last_status,
@@ -162,7 +174,9 @@ class ResilientClient:
                 resp = self.get(current_url, **kwargs)
                 data = resp.json()
             except Exception as exc:
-                raise PaginationError(f"Failed on page {page_num}: {exc}", collected_items=collected, cause=exc) from exc
+                raise PaginationError(
+                    f"Failed on page {page_num}: {exc}", collected_items=collected, cause=exc
+                ) from exc
 
             items = data.get(pag.results_key, [])
             if not items:
@@ -175,7 +189,10 @@ class ResilientClient:
             if next_val is None:
                 return
             if not isinstance(next_val, str):
-                raise PaginationError(f"Expected '{pag.next_key}' to be a string URL, got {type(next_val).__name__}", collected_items=collected)
+                raise PaginationError(
+                    f"Expected '{pag.next_key}' to be a string URL, got {type(next_val).__name__}",
+                    collected_items=collected,
+                )
             current_url = next_val
 
         self._log.warning("Reached max_pages limit (%d)", pag.max_pages)
@@ -199,10 +216,7 @@ class AsyncResilientClient:
         self._policy = retry_policy or RetryPolicy()
         self._log = logger or logging.getLogger(__name__)
         self._client = httpx.AsyncClient(
-            timeout=httpx.Timeout(
-                self._policy.read_timeout,
-                connect=self._policy.connect_timeout
-            )
+            timeout=httpx.Timeout(self._policy.read_timeout, connect=self._policy.connect_timeout)
         )
 
     async def get(self, url: str, **kwargs: Any) -> httpx.Response:
@@ -226,13 +240,17 @@ class AsyncResilientClient:
         try:
             async for attempt in AsyncRetrying(**tenacity_kwargs):
                 with attempt:
-                    self._log.info("HTTP %s %s (attempt %d)", method_upper, safe_url, attempt.retry_state.attempt_number)
+                    self._log.info(
+                        "HTTP %s %s (attempt %d)", method_upper, safe_url, attempt.retry_state.attempt_number
+                    )
                     resp = await self._client.request(method_upper, url, **kwargs)
                     resp.raise_for_status()
                     return resp
         except (httpx.HTTPStatusError, httpx.RequestError) as exc:
             last_status = exc.response.status_code if isinstance(exc, httpx.HTTPStatusError) else None
-            if isinstance(exc, httpx.RequestError) or (isinstance(exc, httpx.HTTPStatusError) and exc.response.status_code in self._policy.retryable_statuses):
+            if isinstance(exc, httpx.RequestError) or (
+                isinstance(exc, httpx.HTTPStatusError) and exc.response.status_code in self._policy.retryable_statuses
+            ):
                 raise RetryError(
                     f"Request failed for {method_upper} {safe_url}: {exc}",
                     last_status=last_status,
@@ -260,7 +278,9 @@ class AsyncResilientClient:
                 resp = await self.get(current_url, **kwargs)
                 data = resp.json()
             except Exception as exc:
-                raise PaginationError(f"Failed on page {page_num}: {exc}", collected_items=collected, cause=exc) from exc
+                raise PaginationError(
+                    f"Failed on page {page_num}: {exc}", collected_items=collected, cause=exc
+                ) from exc
 
             items = data.get(pag.results_key, [])
             if not items:
@@ -274,7 +294,10 @@ class AsyncResilientClient:
             if next_val is None:
                 return
             if not isinstance(next_val, str):
-                raise PaginationError(f"Expected '{pag.next_key}' to be a string URL, got {type(next_val).__name__}", collected_items=collected)
+                raise PaginationError(
+                    f"Expected '{pag.next_key}' to be a string URL, got {type(next_val).__name__}",
+                    collected_items=collected,
+                )
             current_url = next_val
 
         self._log.warning("Reached max_pages limit (%d)", pag.max_pages)

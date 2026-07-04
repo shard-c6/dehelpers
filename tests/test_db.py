@@ -100,11 +100,11 @@ class TestQueryShortcuts:
             row = db.fetch_one("SELECT v FROM empty_t")
             assert row is None
 
-
     def test_bulk_insert(self):
         with DatabaseManager(dsn=SQLITE_DSN) as db:
             with db.session() as session:
                 from sqlalchemy import text
+
                 session.execute(text("CREATE TABLE bulk_t (id INTEGER, val TEXT)"))
 
             records = [{"id": 1, "val": "a"}, {"id": 2, "val": "b"}, {"id": 3, "val": "c"}]
@@ -248,6 +248,7 @@ class TestPostgresIntegration:
 
     def test_bulk_operations(self, tmp_path):
         import pandas as pd
+
         with DatabaseManager() as db:
             db.execute("CREATE TABLE IF NOT EXISTS _test_bulk (id INT, val TEXT)")
             db.execute("TRUNCATE _test_bulk")

@@ -132,7 +132,9 @@ class TestNonIdempotent:
         with pytest.raises(RetryError) as exc_info:
             client.post(f"{BASE}/create")
         # Should have attempted only once.
-        assert exc_info.value.attempts == 3  # Wait, wait, actually attempts is max_attempts recorded, but call_count is 1
+        assert (
+            exc_info.value.attempts == 3
+        )  # Wait, wait, actually attempts is max_attempts recorded, but call_count is 1
         assert route.call_count == 1
 
     @respx.mock
@@ -185,9 +187,7 @@ class TestPagination:
             )
         )
         respx.get(f"{BASE}/items?page=2").mock(
-            return_value=httpx.Response(
-                200, json={"results": [{"id": 3}], "next": None}
-            )
+            return_value=httpx.Response(200, json={"results": [{"id": 3}], "next": None})
         )
 
         client = ResilientClient()
@@ -199,9 +199,7 @@ class TestPagination:
     @respx.mock
     def test_empty_page_stops(self):
         respx.get(f"{BASE}/items").mock(
-            return_value=httpx.Response(
-                200, json={"results": [], "next": f"{BASE}/items?page=2"}
-            )
+            return_value=httpx.Response(200, json={"results": [], "next": f"{BASE}/items?page=2"})
         )
         client = ResilientClient()
         items = list(client.paginate(f"{BASE}/items"))
@@ -209,11 +207,7 @@ class TestPagination:
 
     @respx.mock
     def test_invalid_next_field_raises(self):
-        respx.get(f"{BASE}/items").mock(
-            return_value=httpx.Response(
-                200, json={"results": [{"id": 1}], "next": 12345}
-            )
-        )
+        respx.get(f"{BASE}/items").mock(return_value=httpx.Response(200, json={"results": [{"id": 1}], "next": 12345}))
         client = ResilientClient()
         with pytest.raises(PaginationError) as exc_info:
             list(client.paginate(f"{BASE}/items"))
@@ -273,9 +267,7 @@ class TestPagination:
             )
         )
         respx.get(f"{BASE}/items?page=2").mock(
-            return_value=httpx.Response(
-                200, json={"results": [{"id": 2}], "next": None}
-            )
+            return_value=httpx.Response(200, json={"results": [{"id": 2}], "next": None})
         )
 
         items = []

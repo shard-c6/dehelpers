@@ -56,9 +56,9 @@ secure_logger.info(
     "Connecting to API",
     extra={
         "endpoint": "https://api.example.com/data",
-        "api_key": "sk-secret-12345",          # ← REDACTED
+        "api_key": "sk-secret-12345",  # ← REDACTED
         "authorization": "Bearer eyJhbGci...",  # ← REDACTED
-        "user": "admin",                        # ← kept (not sensitive)
+        "user": "admin",  # ← kept (not sensitive)
     },
 )
 
@@ -69,7 +69,7 @@ secure_logger.info(
         "config": {
             "host": "db.example.com",
             "port": 5432,
-            "db_password": "super-secret",      # ← REDACTED (matches "password")
+            "db_password": "super-secret",  # ← REDACTED (matches "password")
             "pool_size": 5,
         }
     },

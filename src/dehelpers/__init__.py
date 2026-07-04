@@ -36,9 +36,7 @@ def __getattr__(name: str) -> Any:
         try:
             import dehelpers.api as api
         except ImportError as exc:
-            raise ImportError(
-                f"{name} requires the 'http' extra. Install with: pip install dehelpers[http]"
-            ) from exc
+            raise ImportError(f"{name} requires the 'http' extra. Install with: pip install dehelpers[http]") from exc
         return getattr(api, name)
 
     if name == "DatabaseManager":

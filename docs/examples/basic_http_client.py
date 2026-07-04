@@ -27,10 +27,10 @@ client.close()
 # 2. Custom retry policy
 # ---------------------------------------------------------------------------
 policy = RetryPolicy(
-    max_retries=5,              # 6 total attempts
-    backoff_base=0.5,           # Start with 0.5s delay
-    backoff_max=10.0,           # Cap delay at 10s
-    total_timeout=60.0,         # Give up after 60s total
+    max_retries=5,  # 6 total attempts
+    backoff_base=0.5,  # Start with 0.5s delay
+    backoff_max=10.0,  # Cap delay at 10s
+    total_timeout=60.0,  # Give up after 60s total
     retry_non_idempotent=True,  # Also retry POST requests
 )
 

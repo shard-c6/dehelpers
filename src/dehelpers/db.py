@@ -224,7 +224,7 @@ class DatabaseManager:
                 table = Table(table_name, metadata, autoload_with=conn)
 
                 for i in range(0, len(records), chunk_size):
-                    chunk = records[i:i + chunk_size]
+                    chunk = records[i : i + chunk_size]
                     conn.execute(insert(table), chunk)
 
                 conn.commit()
@@ -264,7 +264,9 @@ class DatabaseManager:
                 cols_str = f"({', '.join(columns)})" if columns else ""
                 header_str = "HEADER" if header else ""
 
-                sql = f"COPY {table_name} {cols_str} FROM STDIN WITH (FORMAT CSV, DELIMITER '{delimiter}', {header_str})"
+                sql = (
+                    f"COPY {table_name} {cols_str} FROM STDIN WITH (FORMAT CSV, DELIMITER '{delimiter}', {header_str})"
+                )
 
                 with raw_conn.cursor() as cur, cur.copy(sql) as copy, open(file_path, "rb") as f:  # type: ignore
                     while data := f.read(8192):
