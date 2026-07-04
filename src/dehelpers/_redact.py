@@ -118,5 +118,5 @@ def redact_url(
         else:
             redacted_params[k] = values
 
-    new_query = urlencode(redacted_params, doseq=True, quote_via=lambda s, safe="", encoding=None, errors=None: s)
+    new_query = urlencode(redacted_params, doseq=True, quote_via=lambda s, safe="", encoding=None, errors=None: str(s))
     return urlunsplit(parts._replace(query=new_query))
