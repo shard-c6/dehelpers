@@ -1,6 +1,12 @@
-# dehelpers
+<p align="center">
+  <img src="https://raw.githubusercontent.com/shard-c6/dehelpers/main/docs/images/logo.png" alt="dehelpers logo" width="400">
+</p>
 
-<p align="left">
+<p align="center">
+  <em>Lightweight, production-hardened Python utilities for data engineering pipelines.</em>
+</p>
+
+<p align="center">
   <a href="https://pypi.org/project/dehelpers/"><img src="https://img.shields.io/pypi/v/dehelpers.svg?color=blue" alt="PyPI version"></a>
   <a href="https://pypi.org/project/dehelpers/"><img src="https://img.shields.io/pypi/pyversions/dehelpers.svg" alt="Python versions"></a>
   <a href="https://github.com/shard-c6/dehelpers/actions/workflows/ci.yml"><img src="https://github.com/shard-c6/dehelpers/actions/workflows/ci.yml/badge.svg" alt="CI Status"></a>
@@ -8,52 +14,60 @@
   <a href="https://pypi.org/project/dehelpers/"><img src="https://img.shields.io/pypi/dm/dehelpers.svg" alt="Downloads"></a>
 </p>
 
-Lightweight, production-hardened Python utilities for data engineering pipelines.
+---
 
-**Resilient HTTP** · **PostgreSQL helpers** · **Structured JSON logging** — with automatic secret redaction, bounded retries, and safe connection pooling.
+## What It Does
+
+- 🌐 **Resilient HTTP client** for ETL pipelines with bounded retries and exponential backoff.
+- 🗄️ **PostgreSQL helper** with safe pooling, sessions, and auto-rollback.
+- 📝 **Structured JSON logging** with automatic deep secret redaction.
+
+---
+
+## Quickstart
+
+```bash
+pip install dehelpers
+```
+
+A complete pipeline in under 15 lines:
+
+```python
+from dehelpers import ResilientClient, DatabaseManager, get_logger
+
+log = get_logger("my_pipeline", job_id="daily-sync")
+client = ResilientClient()
+
+# Connects automatically via DATABASE_URL env var
+with DatabaseManager() as db, client:
+    users = client.get("https://jsonplaceholder.typicode.com/users").json()
+    log.info("Fetched users", extra={"count": len(users)})
+
+    with db.session() as session:
+        for user in users:
+            session.execute(
+                "INSERT INTO users (id, name) VALUES (:id, :name) ON CONFLICT DO NOTHING",
+                {"id": user["id"], "name": user["name"]}
+            )
+    log.info("Ingestion complete")
+```
+
+---
+
+## Documentation & Links
+
+- 📚 **[Documentation](https://github.com/shard-c6/dehelpers/tree/main/docs)**: Installation, Getting Started, and FAQ
+- 📖 **[API Reference](https://github.com/shard-c6/dehelpers/blob/main/docs/api-reference.md)**: Full details on every class and function
+- 💡 **[Examples](https://github.com/shard-c6/dehelpers/tree/main/docs/examples)**: Runnable scripts for HTTP, DB, and Logging
+- 📝 **[Medium Article](https://medium.com/@shardulchogale1983)**: The story behind building this library
 
 ---
 
 ## Architecture & Flow
 
-```mermaid
-graph TD
-    subgraph External [External APIs & Services]
-        REST_API[REST API Source]
-    end
+![dehelpers architecture](https://raw.githubusercontent.com/shard-c6/dehelpers/main/docs/images/architecture.png)
 
-    subgraph DPH [dehelpers Package]
-        direction TB
-        subgraph Client [Resilient Client]
-            RC[ResilientClient] --> |Configured by| RP[RetryPolicy]
-            RC --> |Iterates with| NLP[NextLinkPagination]
-            RC --> |Sanitizes query| RU[redact_url]
-        end
-
-        subgraph Logger [Structured Logger]
-            GL[get_logger] --> |Formats record| JF[JSONFormatter]
-            LogCtx[LogContext] --> |Context injection| CV[job_id / request_id]
-            JF --> |Deep-redacts secrets| RD[redact_dict]
-        end
-
-        subgraph Database [Database Manager]
-            DBM[DatabaseManager] --> |Yields sessions| SC[_SessionContext]
-            DBM --> |Manages pool| SQLA[SQLAlchemy Engine]
-            DBM --> |Lazy Load| DF[Pandas DataFrame]
-        end
-    end
-
-    subgraph Target [Storage / Logs]
-        PG[(PostgreSQL DB)]
-        Stderr[Stderr / Cloud Logs]
-    end
-
-    REST_API ==> |Inbound Data| RC
-    RC --> |Yields items / logs events| GL
-    GL ==> |JSON Output| Stderr
-    RC --> |Normalized data| DBM
-    DBM ==> |Pool connections| PG
-```
+*(For an interactive version of this diagram, see the [Architecture Docs](https://github.com/shard-c6/dehelpers/blob/main/docs/architecture.md))*
 
 ---
 
@@ -81,164 +95,6 @@ How this package compares to a standard DIY setup:
 | **Pagination Handling** | Custom pagination loop logic required for every API endpoint. | **Next-link strategy Protocol:** Yields individual items transparently and safely with validation. |
 | **Connection Safety** | Connection leaks or transaction rollback failures if block managers are missed. | **Context-managed Session:** Engine-pooled with pre-ping checks, pool timeout, and auto-rollback. |
 | **Dependency Footprint** | Heavy setup if installing frameworks like Loguru, Structlog, or heavy database utilities. | **Ultra-lightweight:** Base dependencies are minimal. Pandas is entirely optional and lazy-loaded. |
-
----
-
-## Roadmap & What's Next
-
-| Phase | Feature / Expansion | Target Use Case | Status |
-|:---|:---|:---|:---|
-| **v1.0** | Core Resilient HTTP, Postgres Pool, Redacted Logger | Personal ETL scripts & Airflow workflows | **Released** |
-| **v1.1** | Cursor-based Pagination (`CursorPagination`) | Handling APIs that use cursor-based cursors | *Planned* |
-| **v1.2** | Async Client Support (`AsyncResilientClient`) | High-throughput concurrent API extraction pipelines | *Planned* |
-| **v1.3** | Parquet / Arrow Ingestion Support | High-performance bulk column-based ingestion | *Planned* |
-| **v2.0** | Schema Validation Layer (`pydantic` integration) | Ingestion payload sanitization and schema contracts | *Conceptual* |
-
----
-
-## Install
-
-```bash
-# Core (HTTP + DB + logging)
-pip install dehelpers
-
-# With Pandas DataFrame support
-pip install dehelpers[dataframe]
-
-# Development (tests)
-pip install dehelpers[dev,dataframe]
-```
-
-Requires Python ≥ 3.10.
-
----
-
-## Quickstart
-
-### Resilient HTTP Client
-
-```python
-from dehelpers import ResilientClient, RetryPolicy
-
-# Custom policy: 5 retries, retry POST with opt-in
-policy = RetryPolicy(max_retries=5, retry_non_idempotent=True)
-client = ResilientClient(retry_policy=policy)
-
-resp = client.get("https://api.example.com/data")
-print(resp.json())
-
-# Paginate through all items
-for item in client.paginate("https://api.example.com/items"):
-    process(item)
-```
-
-### PostgreSQL Database Helper
-
-```python
-from dehelpers import DatabaseManager
-
-# Reads DATABASE_URL from environment by default
-with DatabaseManager() as db:
-    rows = db.execute(
-        "SELECT * FROM users WHERE active = :active",
-        {"active": True},
-    )
-    print(f"Found {len(rows)} active users")
-
-    # Optional: load into a Pandas DataFrame
-    df = db.to_dataframe("SELECT * FROM sales WHERE date > :d", {"d": "2026-01-01"})
-```
-
-### Structured JSON Logger
-
-```python
-from dehelpers import get_logger, LogContext
-
-log = get_logger("my_etl", job_id="daily-sales")
-
-with LogContext(request_id="req-abc"):
-    log.info("Fetched data", extra={"row_count": 500})
-    # Output: {"timestamp": "...", "level": "INFO", "message": "Fetched data",
-    #          "module": "...", "job_id": "daily-sales", "request_id": "req-abc",
-    #          "row_count": 500, "error": null}
-```
-
-### Complete End-to-End Ingestion Pipeline
-
-Here is a full, production-grade ETL script demonstrating how to combine `ResilientClient`, `DatabaseManager`, and `get_logger` to safely fetch, log, and ingest records in a transactional loop:
-
-```python
-import sys
-from dehelpers import get_logger, LogContext, ResilientClient, DatabaseManager
-
-# 1. Initialize your structured JSON logger
-logger = get_logger("user_ingestion_pipeline", job_id="daily-sync-job")
-
-def run_pipeline():
-    logger.info("Initializing ETL pipeline")
-    
-    # 2. Initialize the Database connection manager
-    try:
-        db = DatabaseManager()  # Resolves DSN automatically via DATABASE_URL
-    except Exception as exc:
-        logger.error("Database initialization failed", exc_info=exc)
-        sys.exit(1)
-        
-    # 3. Verify / create target schema
-    try:
-        with db.session() as session:
-            session.execute(
-                "CREATE TABLE IF NOT EXISTS pipeline_users ("
-                "  id INT PRIMARY KEY,"
-                "  name VARCHAR(100),"
-                "  email VARCHAR(100)"
-                ")"
-            )
-        logger.info("Database schema verified")
-    except Exception as exc:
-        logger.error("Failed to verify database schema", exc_info=exc)
-        sys.exit(1)
-
-    # 4. Fetch and Ingest records resiliently
-    client = ResilientClient()
-    api_url = "https://api.example.com/v1/users"
-
-    try:
-        # Stream individual items across paginated pages
-        for user in client.paginate(api_url):
-            user_id = user.get("id")
-            
-            # LogContext attaches the user_id to all logs emitted in this block
-            with LogContext(request_id=f"user-{user_id}"):
-                with db.session() as session:
-                    # Parameterized query protects against SQL injection
-                    session.execute(
-                        "INSERT INTO pipeline_users (id, name, email) "
-                        "VALUES (:id, :name, :email) "
-                        "ON CONFLICT (id) DO UPDATE "
-                        "SET name = EXCLUDED.name, email = EXCLUDED.email",
-                        {
-                            "id": user_id,
-                            "name": user.get("name"),
-                            "email": user.get("email"),
-                        }
-                    )
-                # This log inherits 'job_id' and 'request_id' (user-ID) in its JSON payload
-                logger.info("Successfully ingested user record", extra={"user_name": user.get("name")})
-                
-    except Exception as exc:
-        logger.error("ETL Ingestion failed mid-pipeline", exc_info=exc)
-        sys.exit(1)
-        
-    finally:
-        client.close()
-        db.dispose()
-        
-    logger.info("ETL Ingestion pipeline completed successfully")
-
-if __name__ == "__main__":
-    run_pipeline()
-```
 
 ---
 

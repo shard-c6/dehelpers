@@ -40,6 +40,10 @@ dev = [
 [project.urls]
 Homepage = "https://github.com/shard-c6/dehelpers"
 Repository = "https://github.com/shard-c6/dehelpers"
+Documentation = "https://github.com/shard-c6/dehelpers/tree/main/docs"
+"Issue Tracker" = "https://github.com/shard-c6/dehelpers/issues"
+Changelog = "https://github.com/shard-c6/dehelpers/blob/main/CHANGELOG.md"
+"Medium Article" = "https://medium.com/@shardulchogale1983"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/dehelpers"]
