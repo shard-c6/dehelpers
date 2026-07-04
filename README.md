@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/shard-c6/dehelpers/main/docs/images/icon.png" alt="dehelpers logo" width="400">
+  <img src="https://raw.githubusercontent.com/shard-c6/dehelpers/main/docs/images/logo.png" alt="dehelpers logo" width="400">
 </p>
 
 <p align="center">
