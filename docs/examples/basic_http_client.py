@@ -9,7 +9,7 @@ Demonstrates:
 Uses the free JSONPlaceholder API — no API key required.
 """
 
-from dehelpers import ResilientClient, RetryPolicy, RetryError
+from dehelpers import ResilientClient, RetryError, RetryPolicy
 
 # ---------------------------------------------------------------------------
 # 1. Simple GET with default retry policy

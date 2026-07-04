@@ -9,8 +9,7 @@ Demonstrates:
 No external services required — runs entirely locally.
 """
 
-from dehelpers import get_logger, LogContext
-
+from dehelpers import LogContext, get_logger
 
 # ---------------------------------------------------------------------------
 # 1. Basic logger

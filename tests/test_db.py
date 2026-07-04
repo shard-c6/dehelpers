@@ -101,6 +101,20 @@ class TestQueryShortcuts:
             assert row is None
 
 
+    def test_bulk_insert(self):
+        with DatabaseManager(dsn=SQLITE_DSN) as db:
+            with db.session() as session:
+                from sqlalchemy import text
+                session.execute(text("CREATE TABLE bulk_t (id INTEGER, val TEXT)"))
+
+            records = [{"id": 1, "val": "a"}, {"id": 2, "val": "b"}, {"id": 3, "val": "c"}]
+            db.bulk_insert("bulk_t", records, chunk_size=2)
+
+            rows = db.execute("SELECT * FROM bulk_t ORDER BY id")
+            assert len(rows) == 3
+            assert rows[0][0] == 1
+
+
 # ---------------------------------------------------------------------------
 # DataFrame (optional)
 # ---------------------------------------------------------------------------
@@ -132,6 +146,18 @@ class TestDataFrame:
                 pytest.raises(ImportError, match="dehelpers\\[dataframe\\]"),
             ):
                 db.to_dataframe("SELECT * FROM df_err")
+
+    def test_from_dataframe(self):
+        pytest.importorskip("pandas")
+        import pandas as pd
+
+        df = pd.DataFrame({"id": [1, 2], "val": ["x", "y"]})
+        with DatabaseManager(dsn=SQLITE_DSN) as db:
+            db.from_dataframe(df, "df_write_t", index=False)
+
+            rows = db.execute("SELECT * FROM df_write_t ORDER BY id")
+            assert len(rows) == 2
+            assert rows[0][0] == 1
 
 
 # ---------------------------------------------------------------------------
@@ -219,3 +245,26 @@ class TestPostgresIntegration:
             assert len(rows) == 1
             assert rows[0][0] > 0
             db.execute("DROP TABLE _test_returning")
+
+    def test_bulk_operations(self, tmp_path):
+        import pandas as pd
+        with DatabaseManager() as db:
+            db.execute("CREATE TABLE IF NOT EXISTS _test_bulk (id INT, val TEXT)")
+            db.execute("TRUNCATE _test_bulk")
+
+            # bulk_insert
+            db.bulk_insert("_test_bulk", [{"id": 1, "val": "a"}, {"id": 2, "val": "b"}])
+            assert len(db.execute("SELECT * FROM _test_bulk")) == 2
+
+            # copy_from_file
+            csv_path = tmp_path / "data.csv"
+            csv_path.write_text("3,c\n4,d\n")
+            db.copy_from_file("_test_bulk", str(csv_path), columns=("id", "val"), header=False)
+            assert len(db.execute("SELECT * FROM _test_bulk")) == 4
+
+            # from_dataframe
+            df = pd.DataFrame({"id": [5, 6], "val": ["e", "f"]})
+            db.from_dataframe(df, "_test_bulk", if_exists="append", index=False)
+            assert len(db.execute("SELECT * FROM _test_bulk")) == 6
+
+            db.execute("DROP TABLE _test_bulk")

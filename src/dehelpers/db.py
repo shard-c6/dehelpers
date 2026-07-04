@@ -196,6 +196,131 @@ class DatabaseManager:
         except SQLAlchemyError as exc:
             raise DatabaseError(f"DataFrame query failed: {exc}") from exc
 
+    def bulk_insert(
+        self,
+        table_name: str,
+        records: list[dict[str, Any]],
+        chunk_size: int = 1000,
+    ) -> None:
+        """Insert multiple records into a table efficiently using batches.
+
+        Parameters
+        ----------
+        table_name:
+            Target table name.
+        records:
+            List of dictionaries representing rows.
+        chunk_size:
+            Number of rows to insert per batch.
+        """
+        if not records:
+            return
+
+        from sqlalchemy import MetaData, Table, insert
+
+        try:
+            with self._engine.connect() as conn:
+                metadata = MetaData()
+                table = Table(table_name, metadata, autoload_with=conn)
+
+                for i in range(0, len(records), chunk_size):
+                    chunk = records[i:i + chunk_size]
+                    conn.execute(insert(table), chunk)
+
+                conn.commit()
+        except SQLAlchemyError as exc:
+            raise DatabaseError(f"Bulk insert failed: {exc}") from exc
+
+    def copy_from_file(
+        self,
+        table_name: str,
+        file_path: str,
+        columns: tuple[str, ...] | None = None,
+        delimiter: str = ",",
+        header: bool = True,
+    ) -> None:
+        """High-throughput load via PostgreSQL COPY (requires psycopg).
+
+        Parameters
+        ----------
+        table_name:
+            Target table name.
+        file_path:
+            Path to the local CSV/TSV file.
+        columns:
+            Optional tuple of column names to load.
+        delimiter:
+            Field delimiter.
+        header:
+            If True, skips the first row (header).
+        """
+        if "psycopg" not in str(self._engine.driver):
+            raise DatabaseError("copy_from_file is only supported with PostgreSQL (psycopg3 driver).")
+
+        try:
+            with self._engine.connect() as conn:
+                raw_conn = conn.connection.dbapi_connection
+
+                cols_str = f"({', '.join(columns)})" if columns else ""
+                header_str = "HEADER" if header else ""
+
+                sql = f"COPY {table_name} {cols_str} FROM STDIN WITH (FORMAT CSV, DELIMITER '{delimiter}', {header_str})"
+
+                with raw_conn.cursor() as cur, cur.copy(sql) as copy, open(file_path, "rb") as f:  # type: ignore
+                    while data := f.read(8192):
+                        copy.write(data)
+
+                conn.commit()
+        except Exception as exc:
+            raise DatabaseError(f"COPY operation failed: {exc}") from exc
+
+    def from_dataframe(
+        self,
+        df: Any,
+        table_name: str,
+        if_exists: str = "append",
+        index: bool = False,
+        chunksize: int | None = None,
+    ) -> None:
+        """Write a Pandas DataFrame directly to the database.
+
+        Requires the ``[dataframe]`` extra::
+
+            pip install dehelpers[dataframe]
+
+        Parameters
+        ----------
+        df:
+            The Pandas DataFrame to write.
+        table_name:
+            Target table name.
+        if_exists:
+            Action to take if the table already exists ('fail', 'replace', 'append').
+        index:
+            Whether to write the DataFrame index as a column.
+        chunksize:
+            Number of rows to write at a time.
+        """
+        try:
+            import pandas  # noqa: F401
+        except ImportError:
+            raise ImportError(
+                "pandas is required for from_dataframe(). Install it with: pip install dehelpers[dataframe]"
+            ) from None
+
+        try:
+            with self._engine.connect() as conn:
+                df.to_sql(
+                    name=table_name,
+                    con=conn,
+                    if_exists=if_exists,
+                    index=index,
+                    chunksize=chunksize,
+                )
+                conn.commit()
+        except SQLAlchemyError as exc:
+            raise DatabaseError(f"DataFrame write failed: {exc}") from exc
+
     # -- Cleanup ------------------------------------------------------------
 
     def dispose(self) -> None:

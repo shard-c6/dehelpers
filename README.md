@@ -30,7 +30,7 @@
 ## Quickstart
 
 ```bash
-pip install dehelpers
+pip install "dehelpers[all]"
 ```
 
 A complete pipeline in under 15 lines:

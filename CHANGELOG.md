@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.2.0] - 2026-07-05
+
+### Added
+- **Core**: Added `[http]`, `[db]`, `[dataframe]`, and `[all]` optional dependency groups for modular installation.
+- **HTTP**: Introduced `AsyncResilientClient` for asynchronous HTTP workloads.
+- **Database**: Added high-throughput bulk operations (`bulk_insert`, `copy_from_file`, `from_dataframe`).
+- **Docs**: Added `MIGRATING.md` to guide users through the v0.2.0 breaking changes.
+
+### Changed
+- **HTTP**: Rewrote `ResilientClient` to use `httpx` and `tenacity` instead of `requests` and custom retry loops (Breaking Change).
+- **HTTP**: `RetryPolicy` is now a configuration object for `tenacity` (Breaking Change).
+
 ## [0.1.4] - 2026-07-05
 
 ### Added

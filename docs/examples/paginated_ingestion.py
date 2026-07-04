@@ -15,14 +15,14 @@ Uses the free JSONPlaceholder API — no API key required.
 """
 
 import sys
+
 from dehelpers import (
-    ResilientClient,
     DatabaseManager,
-    get_logger,
     LogContext,
     PaginationError,
+    ResilientClient,
+    get_logger,
 )
-
 
 # ---------------------------------------------------------------------------
 # 1. Initialize logging
