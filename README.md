@@ -10,6 +10,7 @@
   <a href="https://pypi.org/project/dehelpers/"><img src="https://img.shields.io/pypi/v/dehelpers.svg?color=blue" alt="PyPI version"></a>
   <a href="https://pypi.org/project/dehelpers/"><img src="https://img.shields.io/pypi/pyversions/dehelpers.svg" alt="Python versions"></a>
   <a href="https://github.com/shard-c6/dehelpers/actions/workflows/ci.yml"><img src="https://github.com/shard-c6/dehelpers/actions/workflows/ci.yml/badge.svg" alt="CI Status"></a>
+  <a href="https://codecov.io/gh/shard-c6/dehelpers"><img src="https://codecov.io/gh/shard-c6/dehelpers/branch/main/graph/badge.svg" alt="Coverage"></a>
   <a href="https://github.com/shard-c6/dehelpers/blob/main/LICENSE"><img src="https://img.shields.io/github/license/shard-c6/dehelpers.svg" alt="License"></a>
   <a href="https://pypi.org/project/dehelpers/"><img src="https://img.shields.io/pypi/dm/dehelpers.svg" alt="Downloads"></a>
 </p>
@@ -21,6 +22,8 @@
 - 🌐 **Resilient HTTP client** for ETL pipelines with bounded retries and exponential backoff.
 - 🗄️ **PostgreSQL helper** with safe pooling, sessions, and auto-rollback.
 - 📝 **Structured JSON logging** with automatic deep secret redaction.
+
+> **~60 tests · ~94% coverage · CI on Python 3.10–3.13 · Linted with ruff · Type-checked with mypy**
 
 ---
 
@@ -59,6 +62,7 @@ with DatabaseManager() as db, client:
 - 📚 **[Documentation](https://github.com/shard-c6/dehelpers/tree/main/docs)**: Installation, Getting Started, and FAQ
 - 📖 **[API Reference](https://github.com/shard-c6/dehelpers/blob/main/docs/api-reference.md)**: Full details on every class and function
 - 💡 **[Examples](https://github.com/shard-c6/dehelpers/tree/main/docs/examples)**: Runnable scripts for HTTP, DB, and Logging
+- 🗺️ **[Roadmap](ROADMAP.md)**: Planned features for v0.2 and beyond
 - 📝 **[Medium Article](https://medium.com/@shardulchogale1983)**: The story behind building this library
 
 ---
@@ -183,14 +187,44 @@ pytest --cov=dehelpers --cov-report=term-missing -m "not postgres"
 
 ---
 
+## Code Style & Tools
+
+We use automated tooling to enforce consistent code quality:
+
+| Tool | Purpose |
+|------|----------|
+| [ruff](https://docs.astral.sh/ruff/) | Linting & formatting |
+| [mypy](https://mypy.readthedocs.io/) | Static type checking |
+| [pre-commit](https://pre-commit.com/) | Runs all checks on `git commit` |
+
+```bash
+# Set up after cloning
+pip install -e ".[dev,dataframe]"
+pre-commit install
+```
+
+---
+
 ## Developer Resources & Standards
 
 To ensure the library remains production-grade, reliable, and easily maintainable, we enforce the following open-source standards:
 
 *   **[CONTRIBUTING.md](CONTRIBUTING.md):** Guidelines for cloning the fork, setting up local editable environments, running unit tests, and opening PRs.
 *   **[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md):** Our pledge to foster an inclusive, welcoming, and harassment-free community.
+*   **[SECURITY.md](SECURITY.md):** Responsible disclosure policy for reporting vulnerabilities.
+*   **[ROADMAP.md](ROADMAP.md):** Planned features and design direction.
 *   **[CHANGELOG.md](CHANGELOG.md):** Structured history of features, bugfixes, and breaking changes.
 *   **[LICENSE](LICENSE):** Permissive MIT License.
+
+---
+
+## Maintenance & Support
+
+This library is actively maintained by the author for personal and internal data engineering workflows. It is built with production-minded practices — comprehensive tests, CI, type checking, and structured documentation — but it is not a certified enterprise product.
+
+**Release policy:** Semantic-ish versioning (`v0.x.y`) for incremental features and fixes.
+
+Issues, bug reports, and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) to get started.
 
 ---
 

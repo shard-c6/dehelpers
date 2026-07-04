@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.1.4] - 2026-07-05
+
+### Added
+- **CI**: Lint job with `ruff` and `mypy`; Codecov coverage upload and badge.
+- **Community**: GitHub Issue Templates (bug report, feature request), Pull Request Template.
+- **Security**: `SECURITY.md` with responsible disclosure policy and scope definition.
+- **Roadmap**: `ROADMAP.md` with planned features for v0.2 and v0.3.
+- **Citation**: `CITATION.cff` for GitHub's "Cite this repository" feature.
+- **Code Quality**: `.pre-commit-config.yaml` with `ruff`, `mypy`, and hygiene hooks.
+
+### Changed
+- **README**: Added Codecov badge, testing summary, Code Style section, Maintenance & Support statement.
+- **CONTRIBUTING**: Expanded with pre-commit setup, code style table, and first-time contributor guidance.
+- **pyproject.toml**: Added `ruff`, `mypy`, `pre-commit` to dev dependencies; added `[tool.ruff]` and `[tool.mypy]` configs.
+
+---
+
 ## [0.1.3] - 2026-07-04
 
 ### Changed

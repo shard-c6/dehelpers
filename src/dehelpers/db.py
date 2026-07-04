@@ -69,9 +69,7 @@ class DatabaseManager:
     ) -> None:
         resolved_dsn = dsn or os.environ.get("DATABASE_URL")
         if not resolved_dsn:
-            raise DatabaseError(
-                "No DSN provided and DATABASE_URL environment variable is not set."
-            )
+            raise DatabaseError("No DSN provided and DATABASE_URL environment variable is not set.")
         self._dsn = resolved_dsn
 
         # SQLite uses SingletonThreadPool which doesn't support pool_size,
@@ -189,17 +187,14 @@ class DatabaseManager:
             import pandas as pd
         except ImportError:
             raise ImportError(
-                "pandas is required for to_dataframe(). "
-                "Install it with: pip install dehelpers[dataframe]"
+                "pandas is required for to_dataframe(). Install it with: pip install dehelpers[dataframe]"
             ) from None
 
         try:
             with self._engine.connect() as conn:
                 return pd.read_sql(text(sql), conn, params=params or {})
         except SQLAlchemyError as exc:
-            raise DatabaseError(
-                f"DataFrame query failed: {exc}"
-            ) from exc
+            raise DatabaseError(f"DataFrame query failed: {exc}") from exc
 
     # -- Cleanup ------------------------------------------------------------
 

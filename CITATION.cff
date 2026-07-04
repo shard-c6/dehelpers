@@ -1,0 +1,25 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "dehelpers: Resilient utilities for Python data pipelines"
+type: software
+authors:
+  - given-names: Shardul
+    family-names: Chogale
+repository-code: "https://github.com/shard-c6/dehelpers"
+url: "https://pypi.org/project/dehelpers/"
+license: MIT
+version: "0.1.4"
+date-released: "2026-07-05"
+keywords:
+  - python
+  - data-engineering
+  - etl
+  - postgresql
+  - logging
+  - retry
+  - resilient-http
+abstract: >-
+  A lightweight Python toolkit for data engineering pipelines, providing
+  a resilient HTTP client with bounded retries and exponential backoff,
+  a PostgreSQL connection manager with safe pooling and auto-rollback,
+  and structured JSON logging with automatic deep secret redaction.

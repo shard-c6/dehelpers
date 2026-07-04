@@ -18,8 +18,9 @@ from __future__ import annotations
 import logging
 import random
 import time
+from collections.abc import Iterator
 from dataclasses import dataclass, field
-from typing import Any, Iterator
+from typing import Any
 
 import requests
 
@@ -70,9 +71,7 @@ class RetryPolicy:
     backoff_max: float = 30.0
     jitter: bool = True
     total_timeout: float = 120.0
-    retryable_statuses: frozenset[int] = field(
-        default_factory=lambda: frozenset({429, 500, 502, 503, 504})
-    )
+    retryable_statuses: frozenset[int] = field(default_factory=lambda: frozenset({429, 500, 502, 503, 504}))
     retry_non_idempotent: bool = False
     connect_timeout: float = 5.0
     read_timeout: float = 30.0
@@ -162,13 +161,9 @@ class ResilientClient:
         """
         policy = self._policy
         method_upper = method.upper()
-        can_retry = (
-            method_upper in _IDEMPOTENT_METHODS or policy.retry_non_idempotent
-        )
+        can_retry = method_upper in _IDEMPOTENT_METHODS or policy.retry_non_idempotent
 
-        timeout_tuple = kwargs.pop(
-            "timeout", (policy.connect_timeout, policy.read_timeout)
-        )
+        timeout_tuple = kwargs.pop("timeout", (policy.connect_timeout, policy.read_timeout))
 
         safe_url = redact_url(url)
         start = time.monotonic()
@@ -187,9 +182,7 @@ class ResilientClient:
                 ) from last_exception
 
             try:
-                resp = self._session.request(
-                    method_upper, url, timeout=timeout_tuple, **kwargs
-                )
+                resp = self._session.request(method_upper, url, timeout=timeout_tuple, **kwargs)
                 last_status = resp.status_code
 
                 self._log.info(
@@ -206,11 +199,7 @@ class ResilientClient:
                     return resp
 
                 # Retryable status?
-                if (
-                    can_retry
-                    and resp.status_code in policy.retryable_statuses
-                    and attempt < policy.max_retries
-                ):
+                if can_retry and resp.status_code in policy.retryable_statuses and attempt < policy.max_retries:
                     delay = self._compute_delay(attempt, resp)
                     self._log.warning(
                         "Retryable %d for %s %s — sleeping %.2fs",
@@ -222,7 +211,7 @@ class ResilientClient:
                     time.sleep(delay)
                     continue
 
-                 # Non-retryable HTTP error — raise immediately.
+                # Non-retryable HTTP error — raise immediately.
                 resp.raise_for_status()
 
             except requests.exceptions.HTTPError as exc:
@@ -238,14 +227,10 @@ class ResilientClient:
                 raise exc
             except requests.RequestException as exc:
                 last_exception = exc
-                if (
-                    can_retry
-                    and attempt < policy.max_retries
-                ):
+                if can_retry and attempt < policy.max_retries:
                     delay = self._compute_delay(attempt)
                     self._log.warning(
-                        "Connection error for %s %s (attempt %d/%d) — %s — "
-                        "sleeping %.2fs",
+                        "Connection error for %s %s (attempt %d/%d) — %s — sleeping %.2fs",
                         method_upper,
                         safe_url,
                         attempt + 1,
@@ -256,8 +241,7 @@ class ResilientClient:
                     time.sleep(delay)
                     continue
                 raise RetryError(
-                    f"Request failed after {attempt + 1} attempt(s) for "
-                    f"{method_upper} {safe_url}: {exc}",
+                    f"Request failed after {attempt + 1} attempt(s) for {method_upper} {safe_url}: {exc}",
                     last_status=last_status,
                     attempts=attempt + 1,
                 ) from exc
@@ -362,7 +346,7 @@ class ResilientClient:
                 except (ValueError, TypeError):
                     pass  # Fall through to normal backoff.
 
-        delay = min(policy.backoff_base * (2**attempt), policy.backoff_max)
+        delay: float = min(policy.backoff_base * (2**attempt), policy.backoff_max)
         if policy.jitter:
             delay += random.uniform(0, delay * 0.25)  # noqa: S311
         return delay

@@ -1,0 +1,75 @@
+# Bug Report
+
+name: 🐛 Bug Report
+description: Report a bug in dehelpers
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug! Please fill out the form below to help us reproduce and fix it.
+
+  - type: input
+    id: version
+    attributes:
+      label: dehelpers version
+      description: "Run `pip show dehelpers` to find out."
+      placeholder: "0.1.3"
+    validations:
+      required: true
+
+  - type: input
+    id: python-version
+    attributes:
+      label: Python version
+      description: "Run `python --version` to find out."
+      placeholder: "3.11.9"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: module
+    attributes:
+      label: Affected module
+      options:
+        - ResilientClient (HTTP / API)
+        - DatabaseManager (PostgreSQL)
+        - Logging (get_logger / LogContext)
+        - Redaction (_redact)
+        - Other / Not sure
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Describe the bug
+      description: A clear, concise description of what happened and what you expected to happen.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      description: Minimal code or commands to reproduce the issue.
+      render: python
+    validations:
+      required: true
+
+  - type: textarea
+    id: traceback
+    attributes:
+      label: Traceback / log output
+      description: Paste any relevant error traceback or log output.
+      render: text
+    validations:
+      required: false
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: OS, database version, Airflow version, Docker image, or anything else relevant.
+    validations:
+      required: false

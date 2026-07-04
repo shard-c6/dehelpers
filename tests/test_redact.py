@@ -49,9 +49,7 @@ class TestRedactDict:
 
     def test_extra_sensitive_keys(self):
         data = {"custom_field": "value123"}
-        result = redact_dict(
-            data, extra_sensitive_keys=frozenset({"custom_field"})
-        )
+        result = redact_dict(data, extra_sensitive_keys=frozenset({"custom_field"}))
         assert result["custom_field"] == REDACTED
 
     def test_custom_override_keys(self):

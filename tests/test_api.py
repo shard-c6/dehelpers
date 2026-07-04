@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import time
 from unittest.mock import patch
 
 import pytest
@@ -87,7 +86,7 @@ class TestRetry:
     def test_no_retry_on_400(self):
         responses.get(f"{BASE}/bad", status=400)
         client = ResilientClient()
-        with pytest.raises(Exception):  # HTTPError from raise_for_status
+        with pytest.raises(requests.HTTPError):  # HTTPError from raise_for_status
             client.get(f"{BASE}/bad")
         # Only one call should have been made.
         assert len(responses.calls) == 1
@@ -96,7 +95,7 @@ class TestRetry:
     def test_no_retry_on_401(self):
         responses.get(f"{BASE}/auth", status=401)
         client = ResilientClient()
-        with pytest.raises(Exception):
+        with pytest.raises(requests.HTTPError):
             client.get(f"{BASE}/auth")
         assert len(responses.calls) == 1
 
@@ -104,7 +103,7 @@ class TestRetry:
     def test_no_retry_on_404(self):
         responses.get(f"{BASE}/missing", status=404)
         client = ResilientClient()
-        with pytest.raises(Exception):
+        with pytest.raises(requests.HTTPError):
             client.get(f"{BASE}/missing")
         assert len(responses.calls) == 1
 
@@ -150,13 +149,10 @@ class TestBackoff:
             responses.get(f"{BASE}/slow", status=500)
         responses.get(f"{BASE}/slow", json={"ok": True}, status=200)
 
-        policy = RetryPolicy(
-            max_retries=3, backoff_base=1.0, backoff_max=10.0, jitter=False
-        )
+        policy = RetryPolicy(max_retries=3, backoff_base=1.0, backoff_max=10.0, jitter=False)
         client = ResilientClient(retry_policy=policy)
 
         sleep_calls: list[float] = []
-        original_sleep = time.sleep
 
         def mock_sleep(seconds: float) -> None:
             sleep_calls.append(seconds)

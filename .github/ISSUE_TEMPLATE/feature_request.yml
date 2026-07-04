@@ -1,0 +1,60 @@
+# Feature Request
+
+name: 💡 Feature Request
+description: Suggest an enhancement or new feature for dehelpers
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting an improvement! Please describe the feature and how it fits into data engineering pipelines.
+
+  - type: dropdown
+    id: module
+    attributes:
+      label: Related module
+      options:
+        - ResilientClient (HTTP / API)
+        - DatabaseManager (PostgreSQL)
+        - Logging (get_logger / LogContext)
+        - Redaction (_redact)
+        - New module / Cross-cutting
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or motivation
+      description: What problem does this feature solve? Is it related to a frustration with the current API?
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: How would you like this to work? Include example code if possible.
+      render: python
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Have you considered any workarounds or alternative approaches?
+    validations:
+      required: false
+
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Does this stay within dehelpers' scope?
+      description: "dehelpers is intentionally small. See [Boundaries](https://github.com/shard-c6/dehelpers#boundaries--capabilities)."
+      options:
+        - "Yes — it fits the existing modules"
+        - "Maybe — it's a new utility for data pipelines"
+        - "Not sure"
+    validations:
+      required: true

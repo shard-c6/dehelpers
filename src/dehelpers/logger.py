@@ -138,9 +138,7 @@ class _JSONFormatter(logging.Formatter):
     def _safe_format(self, record: logging.LogRecord) -> str:
         # Build the structured payload.
         payload: dict[str, Any] = {
-            "timestamp": datetime.fromtimestamp(
-                record.created, tz=timezone.utc
-            ).isoformat(),
+            "timestamp": datetime.fromtimestamp(record.created, tz=timezone.utc).isoformat(),
             "level": record.levelname,
             "message": record.getMessage(),
             "module": record.module,
@@ -151,11 +149,7 @@ class _JSONFormatter(logging.Formatter):
         }
 
         # Merge user-supplied extra fields (redacted).
-        extras: dict[str, Any] = {
-            k: v
-            for k, v in record.__dict__.items()
-            if k not in self._INTERNAL_KEYS
-        }
+        extras: dict[str, Any] = {k: v for k, v in record.__dict__.items() if k not in self._INTERNAL_KEYS}
         if extras:
             payload.update(redact_dict(extras))
 
@@ -165,9 +159,9 @@ class _JSONFormatter(logging.Formatter):
             payload["error"] = {
                 "type": exc_type.__name__ if exc_type else "Unknown",
                 "message": str(exc_value),
-                "traceback": traceback.format_exception(
-                    exc_type, exc_value, exc_tb
-                )[-3:],  # last 3 frames to keep logs concise
+                "traceback": traceback.format_exception(exc_type, exc_value, exc_tb)[
+                    -3:
+                ],  # last 3 frames to keep logs concise
             }
 
         return json.dumps(payload, default=str)

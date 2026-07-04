@@ -33,12 +33,8 @@ class TestSessionLifecycle:
             with db.session() as session:
                 from sqlalchemy import text
 
-                session.execute(
-                    text("CREATE TABLE t (id INTEGER PRIMARY KEY, val TEXT)")
-                )
-                session.execute(
-                    text("INSERT INTO t (id, val) VALUES (1, 'hello')")
-                )
+                session.execute(text("CREATE TABLE t (id INTEGER PRIMARY KEY, val TEXT)"))
+                session.execute(text("INSERT INTO t (id, val) VALUES (1, 'hello')"))
             # Data should be committed.
             rows = db.execute("SELECT val FROM t WHERE id = 1")
             assert len(rows) == 1
@@ -49,17 +45,13 @@ class TestSessionLifecycle:
             with db.session() as session:
                 from sqlalchemy import text
 
-                session.execute(
-                    text("CREATE TABLE t2 (id INTEGER PRIMARY KEY, val TEXT)")
-                )
+                session.execute(text("CREATE TABLE t2 (id INTEGER PRIMARY KEY, val TEXT)"))
 
             try:
                 with db.session() as session:
                     from sqlalchemy import text
 
-                    session.execute(
-                        text("INSERT INTO t2 (id, val) VALUES (1, 'should_rollback')")
-                    )
+                    session.execute(text("INSERT INTO t2 (id, val) VALUES (1, 'should_rollback')"))
                     raise RuntimeError("intentional error")
             except RuntimeError:
                 pass
@@ -77,9 +69,7 @@ class TestQueryShortcuts:
             with db.session() as session:
                 from sqlalchemy import text
 
-                session.execute(
-                    text("CREATE TABLE nums (n INTEGER)")
-                )
+                session.execute(text("CREATE TABLE nums (n INTEGER)"))
                 session.execute(text("INSERT INTO nums VALUES (10)"))
                 session.execute(text("INSERT INTO nums VALUES (20)"))
 
@@ -116,7 +106,7 @@ class TestQueryShortcuts:
 # ---------------------------------------------------------------------------
 class TestDataFrame:
     def test_to_dataframe_success(self):
-        pd = pytest.importorskip("pandas")
+        pytest.importorskip("pandas")
         with DatabaseManager(dsn=SQLITE_DSN) as db:
             with db.session() as session:
                 from sqlalchemy import text
@@ -137,9 +127,11 @@ class TestDataFrame:
 
                 session.execute(text("CREATE TABLE df_err (v INT)"))
 
-            with patch.dict("sys.modules", {"pandas": None}):
-                with pytest.raises(ImportError, match="dehelpers\\[dataframe\\]"):
-                    db.to_dataframe("SELECT * FROM df_err")
+            with (
+                patch.dict("sys.modules", {"pandas": None}),
+                pytest.raises(ImportError, match="dehelpers\\[dataframe\\]"),
+            ):
+                db.to_dataframe("SELECT * FROM df_err")
 
 
 # ---------------------------------------------------------------------------
@@ -155,9 +147,8 @@ class TestDSNResolution:
 
     def test_no_dsn_raises(self):
         # Ensure DATABASE_URL is not set.
-        with patch.dict(os.environ, {}, clear=True):
-            with pytest.raises(DatabaseError, match="No DSN provided"):
-                DatabaseManager()
+        with patch.dict(os.environ, {}, clear=True), pytest.raises(DatabaseError, match="No DSN provided"):
+            DatabaseManager()
 
 
 # ---------------------------------------------------------------------------
@@ -209,10 +200,7 @@ class TestPostgresIntegration:
 
     def test_round_trip(self):
         with DatabaseManager() as db:
-            db.execute(
-                "CREATE TABLE IF NOT EXISTS _test_round_trip "
-                "(id SERIAL PRIMARY KEY, val TEXT)"
-            )
+            db.execute("CREATE TABLE IF NOT EXISTS _test_round_trip (id SERIAL PRIMARY KEY, val TEXT)")
             db.execute(
                 "INSERT INTO _test_round_trip (val) VALUES (:val)",
                 {"val": "hello"},
@@ -223,10 +211,7 @@ class TestPostgresIntegration:
 
     def test_returning_clause(self):
         with DatabaseManager() as db:
-            db.execute(
-                "CREATE TABLE IF NOT EXISTS _test_returning "
-                "(id SERIAL PRIMARY KEY, val TEXT)"
-            )
+            db.execute("CREATE TABLE IF NOT EXISTS _test_returning (id SERIAL PRIMARY KEY, val TEXT)")
             rows = db.execute(
                 "INSERT INTO _test_returning (val) VALUES (:val) RETURNING id",
                 {"val": "pg"},

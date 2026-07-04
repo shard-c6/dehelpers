@@ -6,8 +6,6 @@ import json
 import logging
 from io import StringIO
 
-import pytest
-
 from dehelpers.logger import LogContext, get_logger
 
 

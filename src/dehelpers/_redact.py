@@ -65,7 +65,7 @@ def redact_dict(
     if extra_sensitive_keys:
         keys = keys | extra_sensitive_keys
 
-    return _redact_recursive(d, keys)
+    return _redact_recursive(d, keys)  # type: ignore[return-value]
 
 
 def _redact_recursive(obj: object, sensitive_keys: frozenset[str]) -> object:
