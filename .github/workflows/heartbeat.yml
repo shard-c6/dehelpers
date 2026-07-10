@@ -1,0 +1,31 @@
+name: Daily Heartbeat
+
+on:
+  schedule:
+    # Runs every day at midnight UTC
+    - cron: "0 0 * * *"
+  workflow_dispatch: # Allow manual trigger
+
+permissions:
+  contents: write
+
+jobs:
+  heartbeat:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Append heartbeat entry
+        run: |
+          echo "💓 $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> heartbeat.txt
+
+      - name: Commit and push
+        run: |
+          git config user.name "shard-c6"
+          git config user.email "144150911+shard-c6@users.noreply.github.com"
+          git add heartbeat.txt
+          git commit -m "chore: daily heartbeat $(date -u '+%Y-%m-%d')
+
+          Co-authored-by: Mukta01 <Mukta01@users.noreply.github.com>" || echo "No changes to commit"
+          git push
